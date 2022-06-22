@@ -1,14 +1,11 @@
 import 'dart:io';
 
-import 'package:http/http.dart' as http;
-import 'package:flutter/material.dart';
-import 'package:flutter/src/foundation/key.dart';
-import 'package:flutter/src/widgets/framework.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:location/location.dart';
-import 'package:my_place_app/models/place.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/material.dart';
 
+import '../models/place.dart';
 import '../screens/map_screen.dart';
 import '../providers/places.dart';
 import '../helpers/location_helper.dart';
@@ -56,9 +53,6 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
       final lat = currentLocation!.latitude!;
       final lng = currentLocation.longitude!;
 
-      print(lat);
-      print(lng);
-
       final address = await LocationHelper.getLocationAdress(lat, lng);
 
       _location =
@@ -70,6 +64,36 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
     } catch (error) {
       print("Failed to load the image");
     }
+  }
+
+  Future<void> _pickLocationFromMap() async {
+    try {
+      final initialLocation = await LocationHelper.getCurrentLocation();
+
+      if (!mounted) {
+        return;
+      }
+
+      final latlng = await Navigator.of(context).push<LatLng>(
+        MaterialPageRoute(
+            builder: (context) => MapScreen(),
+            settings: RouteSettings(arguments: initialLocation)),
+      );
+
+      final address = await LocationHelper.getLocationAdress(
+          latlng!.latitude, latlng.longitude);
+
+      _location = PlaceLocation(
+          latitude: latlng.latitude,
+          longtitude: latlng.longitude,
+          address: address!);
+
+      _mapImage = await LocationHelper.getLocationMapImage(
+          latlng.latitude, latlng.longitude);
+    } catch (error) {
+      print("Failed to pick a location from map");
+    }
+    setState(() {});
   }
 
   @override
@@ -177,6 +201,13 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
               const SizedBox(
                 height: 10,
               ),
+              if (_location != null)
+                Column(children: [
+                  Text(_location!.address),
+                  const SizedBox(
+                    height: 20,
+                  )
+                ]),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
@@ -185,14 +216,8 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
                     "Current Location",
                     _getCurrentLocationAndMapImage,
                   ),
-                  IconButtonWithDescription(
-                    const Icon(Icons.select_all),
-                    "Choose Location",
-                    () {
-                      final data = Navigator.of(context).push(
-                          MaterialPageRoute(builder: (context) => MapScreen()));
-                    },
-                  ),
+                  IconButtonWithDescription(const Icon(Icons.select_all),
+                      "Choose Location", _pickLocationFromMap),
                 ],
               ),
             ],
