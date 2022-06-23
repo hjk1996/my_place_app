@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/src/foundation/key.dart';
-import 'package:flutter/src/widgets/framework.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
-
-import '../helpers/location_helper.dart';
 
 class MapScreen extends StatefulWidget {
   static const routeName = "/map-screen";
@@ -19,30 +15,37 @@ class _MapScreenState extends State<MapScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final _initialLocation =
-        ModalRoute.of(context)!.settings.arguments as LocationData;
+    final _arguments = ModalRoute.of(context)!.settings.arguments as Map;
+    final _initialLatLng = _arguments['latlng'] as LatLng;
+    final _isReadOnly = _arguments['readOnly'] as bool;
+
     return Scaffold(
         appBar: AppBar(
           title: const Text("Map"),
           actions: [
-            IconButton(
-                onPressed: _latitude == null || _longtitude == null
-                    ? null
-                    : () {
-                        Navigator.of(context)
-                            .pop<LatLng>(LatLng(_latitude!, _longtitude!));
-                      },
-                icon: const Icon(Icons.check))
+            if (!_isReadOnly)
+              IconButton(
+                  onPressed: _latitude == null || _longtitude == null
+                      ? null
+                      : () {
+                          Navigator.of(context)
+                              .pop<LatLng>(LatLng(_latitude!, _longtitude!));
+                        },
+                  icon: const Icon(Icons.check))
           ],
         ),
         body: GoogleMap(
           onTap: (latlng) {
+            if (_isReadOnly) {
+              return;
+            }
+
             setState(() {
               _latitude = latlng.latitude;
               _longtitude = latlng.longitude;
             });
           },
-          markers: _latitude == null || _longtitude == null
+          markers: _latitude == null || _longtitude == null || _isReadOnly
               ? {}
               : {
                   Marker(
@@ -51,8 +54,7 @@ class _MapScreenState extends State<MapScreen> {
                 },
           initialCameraPosition: CameraPosition(
             zoom: 16,
-            target:
-                LatLng(_initialLocation.latitude!, _initialLocation.longitude!),
+            target: LatLng(_initialLatLng.latitude, _initialLatLng.longitude),
           ),
         ));
   }

@@ -1,12 +1,11 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/src/foundation/key.dart';
-import 'package:flutter/src/widgets/framework.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/places.dart';
 import '../screens/add_place_screen.dart';
+import '../screens/place_detail_screen.dart';
 
 class PlaceListScreen extends StatelessWidget {
   @override
@@ -43,6 +42,9 @@ class PlaceListScreen extends StatelessWidget {
                             itemCount: places.places.length,
                             itemBuilder: (ctx, idx) {
                               return ListTile(
+                                onTap: () {
+                                  Navigator.of(context).pushNamed(PlaceDetailScreen.routeName, arguments: places.places[idx].id );
+                                },
                                 leading: CircleAvatar(
                                     backgroundImage: FileImage(
                                         File(places.places[idx].placeImage))),
@@ -54,7 +56,7 @@ class PlaceListScreen extends StatelessWidget {
                                       await places
                                           .deletePlace(places.places[idx].id);
                                     },
-                                    icon: Icon(
+                                    icon: const Icon(
                                       Icons.delete,
                                       color: Colors.red,
                                     )),

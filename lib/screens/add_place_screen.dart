@@ -69,6 +69,8 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
   Future<void> _pickLocationFromMap() async {
     try {
       final initialLocation = await LocationHelper.getCurrentLocation();
+      final initialLatLng =
+          LatLng(initialLocation!.latitude!, initialLocation.longitude!);
 
       if (!mounted) {
         return;
@@ -77,7 +79,10 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
       final latlng = await Navigator.of(context).push<LatLng>(
         MaterialPageRoute(
             builder: (context) => MapScreen(),
-            settings: RouteSettings(arguments: initialLocation)),
+            settings: RouteSettings(arguments: {
+              "latlng": initialLatLng,
+              "readOnly": false,
+            })),
       );
 
       final address = await LocationHelper.getLocationAdress(
